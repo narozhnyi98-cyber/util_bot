@@ -24,28 +24,24 @@ def get_subscription_kb() -> InlineKeyboardMarkup:
 
 @router.callback_query(F.data == "check_sub")
 async def process_check_sub(callback: CallbackQuery, bot: Bot, state: FSMContext):
-    # 1. Убираем крутилку сразу
+    # 1. Сразу убираем крутилку
     await callback.answer()
 
     # 2. Проверяем подписку
     is_sub = await check_subscription(bot, callback.from_user.id)
 
     if is_sub:
-        # 3. Удаляем старое сообщение с кнопками (экран подписки)
-        try:
-            await callback.message.delete()
-        except Exception:
-            pass  # Если сообщение уже удалено или недоступно, просто игнорируем
-
-        # 4. ОТПРАВЛЯЕМ НОВОЕ СООБЩЕНИЕ ЧЕРЕЗ BOT (это самое надежное!)
-        await bot.send_message(
-            chat_id=callback.from_user.id,
+        # 3. ЖЕЛЕЗОБЕТОННОЕ РЕШЕНИЕ:
+        # Мы не удаляем и не отправляем новое. Мы РЕДАКТИРУЕМ текущее сообщение.
+        # Это гарантирует, что пользователь увидит результат мгновенно.
+        
+        await callback.message.edit_text(
             text="✅ Спасибо! Доступ открыт. Выберите действие:",
             reply_markup=get_main_menu_kb()
         )
         
-        # Очищаем состояние на всякий случай
+        # Очищаем состояние
         await state.clear()
     else:
-        # 5. Если не подписан: просто алерт, сообщение с кнопками остаётся висеть
+        # 4. Если не подписан: просто алерт, сообщение с кнопками остаётся
         await callback.answer("❌ Вы ещё не подписались на канал!", show_alert=True)
