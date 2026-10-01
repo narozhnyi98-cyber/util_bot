@@ -1,1 +1,27 @@
-
+[
+  {"id":1,"make":"Toyota","model":"Corolla","country":"Япония","body_type":"Седан","year_from":2021,"engine_volume_cc":1600,"engine_power_hp":122,"price_foreign_rub":1250000},
+  {"id":2,"make":"Honda","model":"Vezel","country":"Япония","body_type":"Кроссовер","year_from":2021,"engine_volume_cc":1500,"engine_power_hp":131,"price_foreign_rub":1300000},
+  {"id":3,"make":"Toyota","model":"RAV4","country":"Япония","body_type":"Кроссовер","year_from":2020,"engine_volume_cc":2000,"engine_power_hp":149,"price_foreign_rub":1950000},
+  {"id":4,"make":"Mazda","model":"CX-5","country":"Япония","body_type":"Кроссовер","year_from":2020,"engine_volume_cc":2000,"engine_power_hp":150,"price_foreign_rub":1750000},
+  {"id":5,"make":"Nissan","model":"X-Trail","country":"Япония","body_type":"Кроссовер","year_from":2020,"engine_volume_cc":2000,"engine_power_hp":149,"price_foreign_rub":1800000},
+  {"id":6,"make":"Toyota","model":"Camry","country":"Япония","body_type":"Седан","year_from":2020,"engine_volume_cc":2500,"engine_power_hp":181,"price_foreign_rub":1850000},
+  {"id":7,"make":"Hyundai","model":"Elantra","country":"Корея","body_type":"Седан","year_from":2021,"engine_volume_cc":1600,"engine_power_hp":128,"price_foreign_rub":1350000},
+  {"id":8,"make":"Kia","model":"K5","country":"Корея","body_type":"Седан","year_from":2021,"engine_volume_cc":2000,"engine_power_hp":150,"price_foreign_rub":1650000},
+  {"id":9,"make":"Kia","model":"Sportage","country":"Корея","body_type":"Кроссовер","year_from":2021,"engine_volume_cc":2000,"engine_power_hp":150,"price_foreign_rub":1750000},
+  {"id":10,"make":"Hyundai","model":"Tucson","country":"Корея","body_type":"Кроссовер","year_from":2021,"engine_volume_cc":2000,"engine_power_hp":150,"price_foreign_rub":1850000},
+  {"id":11,"make":"Renault","model":"Arkana","country":"Корея","body_type":"Кроссовер","year_from":2021,"engine_volume_cc":1600,"engine_power_hp":150,"price_foreign_rub":1600000},
+  {"id":12,"make":"Skoda","model":"Octavia","country":"Европа","body_type":"Седан","year_from":2020,"engine_volume_cc":1400,"engine_power_hp":150,"price_foreign_rub":1500000},
+  {"id":13,"make":"Volkswagen","model":"Tiguan","country":"Европа","body_type":"Кроссовер","year_from":2020,"engine_volume_cc":1400,"engine_power_hp":150,"price_foreign_rub":1850000},
+  {"id":14,"make":"Nissan","model":"Qashqai","country":"Европа","body_type":"Кроссовер","year_from":2020,"engine_volume_cc":1300,"engine_power_hp":140,"price_foreign_rub":1450000},
+  {"id":15,"make":"BMW","model":"3 series","country":"Европа","body_type":"Седан","year_from":2020,"engine_volume_cc":2000,"engine_power_hp":184,"price_foreign_rub":2500000},
+  {"id":16,"make":"Mercedes","model":"C-class","country":"Европа","body_type":"Седан","year_from":2020,"engine_volume_cc":2000,"engine_power_hp":184,"price_foreign_rub":2600000},
+  {"id":17,"make":"Chery","model":"Tiggo 4","country":"Китай","body_type":"Кроссовер","year_from":2022,"engine_volume_cc":1500,"engine_power_hp":147,"price_foreign_rub":1150000},
+  {"id":18,"make":"Chery","model":"Tiggo 7 Pro","country":"Китай","body_type":"Кроссовер","year_from":2022,"engine_volume_cc":1500,"engine_power_hp":147,"price_foreign_rub":1550000},
+  {"id":19,"make":"Haval","model":"Jolion","country":"Китай","body_type":"Кроссовер","year_from":2022,"engine_volume_cc":1500,"engine_power_hp":143,"price_foreign_rub":1350000},
+  {"id":20,"make":"Geely","model":"Coolray","country":"Китай","body_type":"Кроссовер","year_from":2022,"engine_volume_cc":1500,"engine_power_hp":177,"price_foreign_rub":1450000},
+  {"id":21,"make":"Geely","model":"Monjaro","country":"Китай","body_type":"Кроссовер","year_from":2022,"engine_volume_cc":2000,"engine_power_hp":238,"price_foreign_rub":2300000},
+  {"id":22,"make":"Exeed","model":"TXL","country":"Китай","body_type":"Кроссовер","year_from":2022,"engine_volume_cc":2000,"engine_power_hp":197,"price_foreign_rub":2050000},
+  {"id":23,"make":"Kia","model":"Sorento","country":"Корея","body_type":"Кроссовер","year_from":2020,"engine_volume_cc":2200,"engine_power_hp":200,"price_foreign_rub":2200000},
+  {"id":24,"make":"Toyota","model":"Land Cruiser Prado","country":"Япония","body_type":"Кроссовер","year_from":2020,"engine_volume_cc":2800,"engine_power_hp":177,"price_foreign_rub":3800000},
+  {"id":25,"make":"Lexus","model":"RX","country":"Япония","body_type":"Кроссовер","year_from":2020,"engine_volume_cc":3500,"engine_power_hp":300,"price_foreign_rub":4200000}
+]
