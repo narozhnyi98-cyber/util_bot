@@ -13,7 +13,9 @@ router = Router()
 
 
 def parse_budget(text: str) -> int | None:
+    """Парсит бюджет из текста: '2 000 000', '2млн', '2000000'."""
     text = text.lower().replace(" ", "").replace("₽", "").replace("руб", "").replace("р", "")
+
     try:
         if "млн" in text:
             return int(float(text.replace("млн", "")) * 1_000_000)
@@ -74,7 +76,7 @@ async def process_country(message: Message, state: FSMContext):
 
     await message.answer("🔎 Подбираю варианты...")
 
-    results = select_cars(budget, body_type, country)
+    results = await select_cars(budget, body_type, country)
 
     if not results:
         await message.answer(
@@ -85,26 +87,42 @@ async def process_country(message: Message, state: FSMContext):
         await state.clear()
         return
 
-    text = f"🚗 <b>Подбор под бюджет: {budget:,} ₽</b>\nТип: {body_type} | Страна: {country}\n\n"
+    text = (
+        f"🚗 <b>Подбор под бюджет: {budget:,} ₽</b>\n"
+        f"Тип: {body_type} | Страна: {country}\n\n"
+    )
 
     for i, item in enumerate(results, 1):
         car = item["car"]
+
+        # Формируем вердикт по выгоде ввоза
+        if item["is_profitable"] is True:
+            verdict = f"✅ <b>Ввозить выгодно</b> (экономия {item['difference']:,.0f} ₽)"
+        elif item["is_profitable"] is False:
+            verdict = f"❌ <b>Ввозить невыгодно</b> (в РФ дешевле на {abs(item['difference']):,.0f} ₽)"
+        else:
+            verdict = "⚠️ Нет данных о цене в РФ"
+
         text += (
             f"<b>{i}. {car['make']} {car['model']}</b> ({car['country']}, {car['year_from']}+)\n"
             f"   • {car['engine_volume_cc']/1000:.1f} л, {car['engine_power_hp']} л.с.\n"
-            f"   • Цена авто: {car['price_foreign_rub']:,} ₽\n"
-            f"   • Пошлина: {item['duty']:,.0f} ₽\n"
-            f"   • Сбор оформления: {item['customs_fee']:,} ₽\n"
-            f"   • Утильсбор: {item['util']:,.0f} ₽\n"
-            f"   • Логистика и услуги: {item['expenses']:,} ₽\n"
-            f"   • <b>Итого «под ключ»: ~{item['total']:,.0f} ₽</b>\n\n"
+            f"   • Ввоз «под ключ»: <b>{item['total']:,.0f} ₽</b>\n"
         )
+
+        if item["rf_price"]:
+            text += f"   • Цена в РФ: ~{item['rf_price']:,} ₽\n"
+
+        text += f"   • {verdict}\n\n"
 
     text += (
         "⚠️ <i>Расчёт по официальным формулам (ПП РФ № 1637, 1713). "
-        "Точная сумма зависит от курса ЦБ РФ на дату декларации.</i>\n\n"
+        f"Курс EUR ЦБ: {results[0]['eur_rub']:.2f} ₽. "
+        "Цены в РФ — средние по рынку.</i>\n\n"
         "📞 Хотите конкретный вариант и оформление? @nrzhnyi"
     )
+
+    await message.answer(text, parse_mode="HTML", reply_markup=get_main_menu_kb())
+    await state.clear()
 
     await message.answer(text, parse_mode="HTML", reply_markup=get_main_menu_kb())
     await state.clear()
