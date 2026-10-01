@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 CARS_FILE = Path(__file__).parent.parent / "data" / "cars.json"
 RF_PRICES_FILE = Path(__file__).parent.parent / "data" / "rf_prices.json"
 
-# Расходы на оформление и логистику (обновлять по мере изменения цен на услуги)
+# Расходы на оформление и логистику (обновлять по мере изменения цен)
 EXPENSES = {
     "СБКТС": 25000,
     "ЭПТС": 5000,
@@ -81,3 +81,121 @@ def load_rf_prices() -> dict:
 def get_rf_price(make: str, model: str) -> int | None:
     """Возвращает среднюю цену модели в РФ или None."""
     return load_rf_prices().get(f"{make}|{model}")
+
+
+def calculate_customs_fee(price_rub: int) -> int:
+    """Сбор за таможенное оформление."""
+    for limit, fee in CUSTOMS_FEE_TIERS:
+        if price_rub <= limit:
+            return fee
+    return CUSTOMS_FEE_TIERS[-1][1]
+
+
+def calculate_duty(price_rub: int, volume_cc: int, age_years: int, eur_rub: float) -> float:
+    """Таможенная пошлина по единой ставке (в рублях)."""
+    if age_years < 3:
+        for limit, percent, min_eur in DUTY_NEW:
+            if price_rub <= limit:
+                return max(price_rub * percent, min_eur * volume_cc * eur_rub)
+        return price_rub * 0.48
+
+    if age_years <= 5:
+        for limit, rate in DUTY_3_5:
+            if volume_cc <= limit:
+                return rate * volume_cc * eur_rub
+        return DUTY_3_5[-1][1] * volume_cc * eur_rub
+
+    for limit, rate in DUTY_5_PLUS:
+        if volume_cc <= limit:
+            return rate * volume_cc * eur_rub
+    return DUTY_5_PLUS[-1][1] * volume_cc * eur_rub
+
+
+def calculate_util(power_hp: int, age_years: int) -> float:
+    """Утильсбор для физлица (легковой)."""
+    table = UTIL_COEF_NEW if age_years < 3 else UTIL_COEF_OLD
+    for max_power, coef in table:
+        if power_hp <= max_power:
+            return UTIL_BASE_RATE * coef
+    return UTIL_BASE_RATE * table[-1][1]
+
+
+def calculate_total_expenses(country: str) -> int:
+    """Стоимость оформления и логистики."""
+    logistics_key = f"Логистика {country}"
+    logistics = EXPENSES.get(logistics_key, 120_000)
+    return (
+        EXPENSES["СБКТС"]
+        + EXPENSES["ЭПТС"]
+        + EXPENSES["ГЛОНАСС"]
+        + logistics
+        + EXPENSES["Брокер"]
+    )
+
+
+async def select_cars(budget: int, body_type: str, country: str) -> list:
+    """
+    Подбирает автомобили под бюджет с актуальным курсом EUR
+    и сравнением с ценой в РФ.
+    """
+    cars = load_cars()
+    current_year = datetime.now().year
+    results = []
+
+    eur_rub = await get_eur_rate()
+    logger.info(f"Курс EUR для расчёта: {eur_rub:.2f} ₽")
+
+    for car in cars:
+        if body_type != "Любой" and car["body_type"] != body_type:
+            continue
+        if country != "Любая" and car["country"] != country:
+            continue
+
+        age_years = current_year - car["year_from"]
+
+        util = calculate_util(car["engine_power_hp"], age_years)
+        duty = calculate_duty(
+            car["price_foreign_rub"],
+            car["engine_volume_cc"],
+            age_years,
+            eur_rub,
+        )
+        customs_fee = calculate_customs_fee(car["price_foreign_rub"])
+        expenses = calculate_total_expenses(car["country"])
+
+        total = car["price_foreign_rub"] + duty + util + customs_fee + expenses
+
+        # Сравнение с ценой в РФ
+        rf_price = get_rf_price(car["make"], car["model"])
+        if rf_price is not None:
+            difference = rf_price - total
+            is_profitable = difference > 0
+        else:
+            difference = None
+            is_profitable = None
+
+        if total <= budget * 1.05:
+            results.append({
+                "car": car,
+                "total": total,
+                "util": util,
+                "duty": duty,
+                "customs_fee": customs_fee,
+                "expenses": expenses,
+                "age_years": age_years,
+                "eur_rub": eur_rub,
+                "rf_price": rf_price,
+                "difference": difference,
+                "is_profitable": is_profitable,
+            })
+
+    # Сортировка: сначала выгодные для ввоза, потом остальные
+    def sort_key(x):
+        if x["difference"] is None:
+            return (2, x["total"])
+        if x["difference"] > 0:
+            return (0, -x["difference"])
+        return (1, x["total"])
+
+    results.sort(key=sort_key)
+    return results[:5]
