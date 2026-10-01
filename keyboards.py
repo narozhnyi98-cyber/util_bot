@@ -5,6 +5,7 @@ def get_main_menu_kb() -> ReplyKeyboardMarkup:
     return ReplyKeyboardMarkup(
         keyboard=[
             [KeyboardButton(text="🚗 Рассчитать утильсбор")],
+            [KeyboardButton(text="🚗 Подобрать авто под бюджет")],
             [KeyboardButton(text="📞 Связаться со мной")]
         ],
         resize_keyboard=True
@@ -40,6 +41,32 @@ def get_age_kb() -> ReplyKeyboardMarkup:
         keyboard=[
             [KeyboardButton(text="До 3 лет")],
             [KeyboardButton(text="Старше 3 лет")],
+            [KeyboardButton(text="⬅️ В меню")]
+        ],
+        resize_keyboard=True,
+        one_time_keyboard=True
+    )
+
+
+def get_body_type_kb() -> ReplyKeyboardMarkup:
+    return ReplyKeyboardMarkup(
+        keyboard=[
+            [KeyboardButton(text="Седан"), KeyboardButton(text="Кроссовер")],
+            [KeyboardButton(text="Хэтчбек"), KeyboardButton(text="Универсал")],
+            [KeyboardButton(text="Любой")],
+            [KeyboardButton(text="⬅️ В меню")]
+        ],
+        resize_keyboard=True,
+        one_time_keyboard=True
+    )
+
+
+def get_country_kb() -> ReplyKeyboardMarkup:
+    return ReplyKeyboardMarkup(
+        keyboard=[
+            [KeyboardButton(text="Япония"), KeyboardButton(text="Корея")],
+            [KeyboardButton(text="Китай"), KeyboardButton(text="Европа")],
+            [KeyboardButton(text="Любая")],
             [KeyboardButton(text="⬅️ В меню")]
         ],
         resize_keyboard=True,
