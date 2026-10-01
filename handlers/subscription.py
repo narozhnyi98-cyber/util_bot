@@ -1,5 +1,5 @@
 from aiogram import Router, F, Bot
-from aiogram.types import CallbackQuery
+from aiogram.types import CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 from keyboards import get_main_menu_kb
 
 router = Router()
@@ -19,7 +19,6 @@ async def check_subscription(bot: Bot, user_id: int) -> bool:
         return False
 
 def get_subscription_kb() -> InlineKeyboardMarkup:
-    from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="📢 Подписаться на канал", url=CHANNEL_URL)],
         [InlineKeyboardButton(text="✅ Я подписался", callback_data="check_sub")]
