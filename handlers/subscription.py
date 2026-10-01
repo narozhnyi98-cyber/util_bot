@@ -1,6 +1,6 @@
 from aiogram import Router, F, Bot
 from aiogram.types import CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
-from aiogram.fsm.context import FSMContext  # <-- ЭТОГО НЕ ХВАТАЛО
+from aiogram.fsm.context import FSMContext  # <-- ЭТОТ ИМПОРТ БЫЛ ПРОПУЩЕН
 from keyboards import get_main_menu_kb
 
 router = Router()
@@ -24,7 +24,7 @@ def get_subscription_kb() -> InlineKeyboardMarkup:
 
 @router.callback_query(F.data == "check_sub")
 async def process_check_sub(callback: CallbackQuery, bot: Bot, state: FSMContext):
-    await callback.answer()  # <-- Обязательно: убирает «крутящуюся» анимацию
+    await callback.answer()  # <-- Убирает «крутящуюся» анимацию
 
     try:
         is_sub = await check_subscription(bot, callback.from_user.id)
@@ -36,8 +36,8 @@ async def process_check_sub(callback: CallbackQuery, bot: Bot, state: FSMContext
     if is_sub:
         await callback.message.delete()
         await callback.message.answer(
-            "✅ Спасибо!
-
+            "✅ Спасибо! Доступ открыт. Выберите действие:",
+            reply_markup=get_main_menu_kb()
+        )
     else:
-        # Пользователь НЕ подписан: показываем всплывающее уведомление, кнопки остаются
         await callback.answer("❌ Вы ещё не подписались на канал!", show_alert=True)
