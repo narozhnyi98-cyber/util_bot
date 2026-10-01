@@ -7,3 +7,9 @@ class UtilForm(StatesGroup):
     age = State()
     engine_volume = State()
     engine_power = State()
+
+
+class CarSelectionForm(StatesGroup):
+    budget = State()
+    body_type = State()
+    country = State()
