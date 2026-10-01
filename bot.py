@@ -5,7 +5,7 @@ from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
 
 from config import BOT_TOKEN
-from handlers import start, calculation, subscription
+from handlers import start, calculation, subscription, car_selection
 
 
 async def main():
@@ -19,7 +19,8 @@ async def main():
 
     dp.include_router(start.router)
     dp.include_router(calculation.router)
-    dp.include_router(subscription.router)  # <-- Без этой строки кнопка не работает
+    dp.include_router(subscription.router)
+    dp.include_router(car_selection.router)
 
     logging.info("Бот запущен")
     await dp.start_polling(bot)
