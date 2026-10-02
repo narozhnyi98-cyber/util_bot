@@ -78,7 +78,7 @@ async def process_country(message: Message, state: FSMContext):
 
     results = await select_cars(budget, body_type, country)
 
-       if not results:
+    if not results:
         await message.answer(
             f"😔 В бюджете {budget:,} ₽ ничего не найдено.\n\n"
             f"Ввоз «под ключ» обычно стоит в 1.5–2 раза дороже самой машины — "
@@ -99,7 +99,6 @@ async def process_country(message: Message, state: FSMContext):
     for i, item in enumerate(results, 1):
         car = item["car"]
 
-        # Формируем вердикт по выгоде ввоза
         if item["is_profitable"] is True:
             verdict = f"✅ <b>Ввозить выгодно</b> (экономия {item['difference']:,.0f} ₽)"
         elif item["is_profitable"] is False:
@@ -107,7 +106,7 @@ async def process_country(message: Message, state: FSMContext):
         else:
             verdict = "⚠️ Нет данных о цене в РФ"
 
-         over_line = ""
+        over_line = ""
         if item.get("over_budget"):
             over_line = f"   • ⚠️ <i>Выше бюджета на {item['over_amount']:,.0f} ₽</i>\n"
 
