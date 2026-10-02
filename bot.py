@@ -5,7 +5,7 @@ from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
 
 from config import BOT_TOKEN
-from handlers import start, calculation, subscription, car_selection
+from handlers import start, calculation, subscription, car_selection, import_advisor, lead
 
 
 async def main():
@@ -21,6 +21,8 @@ async def main():
     dp.include_router(calculation.router)
     dp.include_router(subscription.router)
     dp.include_router(car_selection.router)
+    dp.include_router(import_advisor.router)
+    dp.include_router(lead.router)
 
     logging.info("Бот запущен")
     await dp.start_polling(bot)
