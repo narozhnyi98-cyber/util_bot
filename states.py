@@ -8,6 +8,7 @@ class UtilForm(StatesGroup):
     age = State()
     engine_volume = State()
     engine_power = State()
+    car_price = State()  # ← НОВОЕ: стоимость авто для EV/HEV
 
 
 class CarSelectionForm(StatesGroup):
