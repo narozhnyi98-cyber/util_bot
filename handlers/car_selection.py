@@ -107,10 +107,15 @@ async def process_country(message: Message, state: FSMContext):
         else:
             verdict = "⚠️ Нет данных о цене в РФ"
 
+         over_line = ""
+        if item.get("over_budget"):
+            over_line = f"   • ⚠️ <i>Выше бюджета на {item['over_amount']:,.0f} ₽</i>\n"
+
         text += (
             f"<b>{i}. {car['make']} {car['model']}</b> ({car['country']}, {car['year_from']}+)\n"
             f"   • {car['engine_volume_cc']/1000:.1f} л, {car['engine_power_hp']} л.с.\n"
             f"   • Ввоз «под ключ»: <b>{item['total']:,.0f} ₽</b>\n"
+            f"{over_line}"
         )
 
         if item["rf_price"]:
