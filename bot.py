@@ -5,7 +5,10 @@ from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
 
 from config import BOT_TOKEN
-from handlers import start, calculation, subscription, car_selection, import_advisor, lead, profile
+from handlers import (
+    start, calculation, subscription,
+    car_selection, import_advisor, lead, profile
+)
 from services.storage import init_db
 
 
@@ -20,6 +23,14 @@ async def main():
     bot = Bot(token=BOT_TOKEN)
     dp = Dispatcher(storage=MemoryStorage())
 
+    # ⚠️ ВАЖЕН ПОРЯДОК:
+    # 1. start       — команды /start, /contact, /cancel + главное меню
+    # 2. calculation — кнопка «🚗 Рассчитать утильсбор» и вся логика
+    # 3. subscription — проверка подписки на канал
+    # 4. car_selection — подбор авто
+    # 5. import_advisor — «Стоит ли везти?»
+    # 6. lead — заявки
+    # 7. profile — история расчётов
     dp.include_router(start.router)
     dp.include_router(calculation.router)
     dp.include_router(subscription.router)
