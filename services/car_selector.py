@@ -1,16 +1,78 @@
-import json
 import logging
 from datetime import datetime
-from pathlib import Path
 
 from services.currency import get_eur_rate
 
 logger = logging.getLogger(__name__)
 
-CARS_FILE = Path(__file__).parent.parent / "data" / "cars.json"
-RF_PRICES_FILE = Path(__file__).parent.parent / "data" / "rf_prices.json"
 
-# Расходы на оформление и логистику (обновлять по мере изменения цен)
+# ─────────────────────────────────────────────────────────────
+# БАЗА АВТОМОБИЛЕЙ (встроена в код, чтобы не терялась на сервере)
+# ─────────────────────────────────────────────────────────────
+CARS = [
+    {"id":1,"make":"Toyota","model":"Corolla","country":"Япония","body_type":"Седан","year_from":2021,"engine_volume_cc":1600,"engine_power_hp":122,"price_foreign_rub":1250000},
+    {"id":2,"make":"Honda","model":"Vezel","country":"Япония","body_type":"Кроссовер","year_from":2021,"engine_volume_cc":1500,"engine_power_hp":131,"price_foreign_rub":1300000},
+    {"id":3,"make":"Toyota","model":"RAV4","country":"Япония","body_type":"Кроссовер","year_from":2020,"engine_volume_cc":2000,"engine_power_hp":149,"price_foreign_rub":1950000},
+    {"id":4,"make":"Mazda","model":"CX-5","country":"Япония","body_type":"Кроссовер","year_from":2020,"engine_volume_cc":2000,"engine_power_hp":150,"price_foreign_rub":1750000},
+    {"id":5,"make":"Nissan","model":"X-Trail","country":"Япония","body_type":"Кроссовер","year_from":2020,"engine_volume_cc":2000,"engine_power_hp":149,"price_foreign_rub":1800000},
+    {"id":6,"make":"Toyota","model":"Camry","country":"Япония","body_type":"Седан","year_from":2020,"engine_volume_cc":2500,"engine_power_hp":181,"price_foreign_rub":1850000},
+    {"id":7,"make":"Hyundai","model":"Elantra","country":"Корея","body_type":"Седан","year_from":2021,"engine_volume_cc":1600,"engine_power_hp":128,"price_foreign_rub":1350000},
+    {"id":8,"make":"Kia","model":"K5","country":"Корея","body_type":"Седан","year_from":2021,"engine_volume_cc":2000,"engine_power_hp":150,"price_foreign_rub":1650000},
+    {"id":9,"make":"Kia","model":"Sportage","country":"Корея","body_type":"Кроссовер","year_from":2021,"engine_volume_cc":2000,"engine_power_hp":150,"price_foreign_rub":1750000},
+    {"id":10,"make":"Hyundai","model":"Tucson","country":"Корея","body_type":"Кроссовер","year_from":2021,"engine_volume_cc":2000,"engine_power_hp":150,"price_foreign_rub":1850000},
+    {"id":11,"make":"Renault","model":"Arkana","country":"Корея","body_type":"Кроссовер","year_from":2021,"engine_volume_cc":1600,"engine_power_hp":150,"price_foreign_rub":1600000},
+    {"id":12,"make":"Skoda","model":"Octavia","country":"Европа","body_type":"Седан","year_from":2020,"engine_volume_cc":1400,"engine_power_hp":150,"price_foreign_rub":1500000},
+    {"id":13,"make":"Volkswagen","model":"Tiguan","country":"Европа","body_type":"Кроссовер","year_from":2020,"engine_volume_cc":1400,"engine_power_hp":150,"price_foreign_rub":1850000},
+    {"id":14,"make":"Nissan","model":"Qashqai","country":"Европа","body_type":"Кроссовер","year_from":2020,"engine_volume_cc":1300,"engine_power_hp":140,"price_foreign_rub":1450000},
+    {"id":15,"make":"BMW","model":"3 series","country":"Европа","body_type":"Седан","year_from":2020,"engine_volume_cc":2000,"engine_power_hp":184,"price_foreign_rub":2500000},
+    {"id":16,"make":"Mercedes","model":"C-class","country":"Европа","body_type":"Седан","year_from":2020,"engine_volume_cc":2000,"engine_power_hp":184,"price_foreign_rub":2600000},
+    {"id":17,"make":"Chery","model":"Tiggo 4","country":"Китай","body_type":"Кроссовер","year_from":2022,"engine_volume_cc":1500,"engine_power_hp":147,"price_foreign_rub":1150000},
+    {"id":18,"make":"Chery","model":"Tiggo 7 Pro","country":"Китай","body_type":"Кроссовер","year_from":2022,"engine_volume_cc":1500,"engine_power_hp":147,"price_foreign_rub":1550000},
+    {"id":19,"make":"Haval","model":"Jolion","country":"Китай","body_type":"Кроссовер","year_from":2022,"engine_volume_cc":1500,"engine_power_hp":143,"price_foreign_rub":1350000},
+    {"id":20,"make":"Geely","model":"Coolray","country":"Китай","body_type":"Кроссовер","year_from":2022,"engine_volume_cc":1500,"engine_power_hp":177,"price_foreign_rub":1450000},
+    {"id":21,"make":"Geely","model":"Monjaro","country":"Китай","body_type":"Кроссовер","year_from":2022,"engine_volume_cc":2000,"engine_power_hp":238,"price_foreign_rub":2300000},
+    {"id":22,"make":"Exeed","model":"TXL","country":"Китай","body_type":"Кроссовер","year_from":2022,"engine_volume_cc":2000,"engine_power_hp":197,"price_foreign_rub":2050000},
+    {"id":23,"make":"Kia","model":"Sorento","country":"Корея","body_type":"Кроссовер","year_from":2020,"engine_volume_cc":2200,"engine_power_hp":200,"price_foreign_rub":2200000},
+    {"id":24,"make":"Toyota","model":"Land Cruiser Prado","country":"Япония","body_type":"Кроссовер","year_from":2020,"engine_volume_cc":2800,"engine_power_hp":177,"price_foreign_rub":3800000},
+    {"id":25,"make":"Lexus","model":"RX","country":"Япония","body_type":"Кроссовер","year_from":2020,"engine_volume_cc":3500,"engine_power_hp":300,"price_foreign_rub":4200000},
+]
+
+
+# ─────────────────────────────────────────────────────────────
+# ЦЕНЫ В РФ (встроены в код)
+# ─────────────────────────────────────────────────────────────
+RF_PRICES = {
+    "Toyota|Corolla": 1850000,
+    "Honda|Vezel": 1900000,
+    "Toyota|RAV4": 2750000,
+    "Mazda|CX-5": 3800000,
+    "Nissan|X-Trail": 2500000,
+    "Toyota|Camry": 3800000,
+    "Hyundai|Elantra": 1950000,
+    "Kia|K5": 2300000,
+    "Kia|Sportage": 3200000,
+    "Hyundai|Tucson": 3900000,
+    "Renault|Arkana": 2200000,
+    "Skoda|Octavia": 2200000,
+    "Volkswagen|Tiguan": 2700000,
+    "Nissan|Qashqai": 2200000,
+    "BMW|3 series": 3900000,
+    "Mercedes|C-class": 4100000,
+    "Chery|Tiggo 4": 1700000,
+    "Chery|Tiggo 7 Pro": 2200000,
+    "Haval|Jolion": 1900000,
+    "Geely|Coolray": 2100000,
+    "Geely|Monjaro": 3500000,
+    "Exeed|TXL": 3300000,
+    "Kia|Sorento": 3400000,
+    "Toyota|Land Cruiser Prado": 4500000,
+    "Lexus|RX": 4500000,
+}
+
+
+# ─────────────────────────────────────────────────────────────
+# РАСХОДЫ НА ОФОРМЛЕНИЕ И ЛОГИСТИКУ
+# ─────────────────────────────────────────────────────────────
 EXPENSES = {
     "СБКТС": 25000,
     "ЭПТС": 5000,
@@ -21,6 +83,11 @@ EXPENSES = {
     "Логистика Европа": 200000,
     "Брокер": 35000,
 }
+
+
+# ─────────────────────────────────────────────────────────────
+# ОФИЦИАЛЬНЫЕ ТАБЛИЦЫ (ПП РФ № 1637, № 1713)
+# ─────────────────────────────────────────────────────────────
 
 # Сбор за таможенное оформление (ПП РФ № 1637)
 CUSTOMS_FEE_TIERS = [
@@ -56,7 +123,7 @@ DUTY_5_PLUS = [
     (2_300, 4.8), (3_000, 5.0), (float('inf'), 5.7),
 ]
 
-# Коэффициенты утильсбора (ПП РФ № 1713), физлица, легковые
+# Коэффициенты утильсбора для физлиц (ПП РФ № 1713)
 UTIL_COEF_NEW = [
     (160, 0.17), (190, 92.40), (220, 109.68),
     (250, 129.96), (280, 153.96), (9999, 182.40),
@@ -68,20 +135,23 @@ UTIL_COEF_OLD = [
 UTIL_BASE_RATE = 20000
 
 
+# ─────────────────────────────────────────────────────────────
+# ФУНКЦИИ ДОСТУПА К БАЗЕ
+# ─────────────────────────────────────────────────────────────
+
 def load_cars() -> list:
-    with open(CARS_FILE, "r", encoding="utf-8") as f:
-        return json.load(f)
-
-
-def load_rf_prices() -> dict:
-    with open(RF_PRICES_FILE, "r", encoding="utf-8") as f:
-        return json.load(f)
+    """Возвращает базу автомобилей."""
+    return CARS
 
 
 def get_rf_price(make: str, model: str) -> int | None:
     """Возвращает среднюю цену модели в РФ или None."""
-    return load_rf_prices().get(f"{make}|{model}")
+    return RF_PRICES.get(f"{make}|{model}")
 
+
+# ─────────────────────────────────────────────────────────────
+# РАСЧЁТНЫЕ ФУНКЦИИ
+# ─────────────────────────────────────────────────────────────
 
 def calculate_customs_fee(price_rub: int) -> int:
     """Сбор за таможенное оформление."""
@@ -133,6 +203,10 @@ def calculate_total_expenses(country: str) -> int:
     )
 
 
+# ─────────────────────────────────────────────────────────────
+# ГЛАВНАЯ ФУНКЦИЯ ПОДБОРА
+# ─────────────────────────────────────────────────────────────
+
 async def select_cars(budget: int, body_type: str, country: str) -> list:
     """
     Подбирает автомобили под бюджет с актуальным курсом EUR
@@ -165,7 +239,6 @@ async def select_cars(budget: int, body_type: str, country: str) -> list:
 
         total = car["price_foreign_rub"] + duty + util + customs_fee + expenses
 
-        # Сравнение с ценой в РФ
         rf_price = get_rf_price(car["make"], car["model"])
         if rf_price is not None:
             difference = rf_price - total
@@ -189,7 +262,6 @@ async def select_cars(budget: int, body_type: str, country: str) -> list:
                 "is_profitable": is_profitable,
             })
 
-    # Сортировка: сначала выгодные для ввоза, потом остальные
     def sort_key(x):
         if x["difference"] is None:
             return (2, x["total"])
