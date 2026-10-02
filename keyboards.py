@@ -8,6 +8,7 @@ def get_main_menu_kb() -> ReplyKeyboardMarkup:
             [KeyboardButton(text="🚗 Подобрать авто под бюджет")],
             [KeyboardButton(text="💰 Стоит ли везти?")],
             [KeyboardButton(text="📩 Оформить под ключ")],
+            [KeyboardButton(text="📋 Мои расчёты")],
             [KeyboardButton(text="📞 Связаться со мной")]
         ],
         resize_keyboard=True
