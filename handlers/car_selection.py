@@ -78,10 +78,14 @@ async def process_country(message: Message, state: FSMContext):
 
     results = await select_cars(budget, body_type, country)
 
-    if not results:
+       if not results:
         await message.answer(
-            "😔 В этом бюджете ничего не найдено.\n"
-            "Попробуйте увеличить бюджет или изменить параметры.",
+            f"😔 В бюджете {budget:,} ₽ ничего не найдено.\n\n"
+            f"Ввоз «под ключ» обычно стоит в 1.5–2 раза дороже самой машины — "
+            f"пошлина, логистика и оформление съедают больше половины.\n\n"
+            f"👉 Попробуйте увеличить бюджет до <b>{int(budget * 1.8):,} ₽</b> — "
+            f"тогда появятся реальные варианты.",
+            parse_mode="HTML",
             reply_markup=get_main_menu_kb()
         )
         await state.clear()
