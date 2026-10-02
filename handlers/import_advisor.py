@@ -119,6 +119,7 @@ async def choose_car(callback: CallbackQuery):
     else:
         engine_label = f"{car['engine_volume_cc']/1000:.1f} л"
 
+    # ──── ДОПОЛНИТЕЛЬНЫЕ СТРОКИ: акциз и НДС ────
     extra_lines = ""
     if result.get("excise", 0) > 0:
         extra_lines += f"   • Акциз: {result['excise']:,.0f} ₽\n"
