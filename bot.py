@@ -5,7 +5,8 @@ from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
 
 from config import BOT_TOKEN
-from handlers import start, calculation, subscription, car_selection, import_advisor, lead
+from handlers import start, calculation, subscription, car_selection, import_advisor, lead, profile
+from services.storage import init_db
 
 
 async def main():
@@ -13,6 +14,8 @@ async def main():
         level=logging.INFO,
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
+
+    init_db()
 
     bot = Bot(token=BOT_TOKEN)
     dp = Dispatcher(storage=MemoryStorage())
@@ -23,6 +26,7 @@ async def main():
     dp.include_router(car_selection.router)
     dp.include_router(import_advisor.router)
     dp.include_router(lead.router)
+    dp.include_router(profile.router)
 
     logging.info("Бот запущен")
     await dp.start_polling(bot)
