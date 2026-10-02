@@ -4,7 +4,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
 from states import UtilForm
-from keyboards import get_main_menu_kb, get_category_kb
+from keyboards import get_main_menu_kb
 from handlers.subscription import check_subscription, get_subscription_kb
 
 router = Router()
@@ -15,9 +15,7 @@ async def cmd_start(message: Message, state: FSMContext, bot: Bot):
     await state.clear()
     user_id = message.from_user.id
 
-    # Проверяем, подписан ли пользователь на канал
     if await check_subscription(bot, user_id):
-        # Если подписан — показываем главное меню
         await message.answer(
             "🚗 <b>Расчёт утилизационного сбора</b>\n\n"
             "Я помогу рассчитать предварительную сумму утильсбора "
@@ -28,7 +26,6 @@ async def cmd_start(message: Message, state: FSMContext, bot: Bot):
             parse_mode="HTML"
         )
     else:
-        # Если не подписан — показываем экран с кнопкой подписки
         await message.answer(
             "👋 Для доступа к боту подпишитесь на наш канал.\n\n"
             "Это бесплатно и займёт 5 секунд.",
@@ -56,24 +53,6 @@ async def cmd_cancel(message: Message, state: FSMContext):
         "Диалог сброшен.",
         reply_markup=get_main_menu_kb()
     )
-
-
-@router.message(F.text == "🚗 Рассчитать утильсбор")
-async def start_calculation(message: Message, state: FSMContext, bot: Bot):
-    # Заодно проверяем подписку и здесь — на случай, если отписались
-    if not await check_subscription(bot, message.from_user.id):
-        await message.answer(
-            "👋 Для доступа к боту подпишитесь на наш канал.\n\n"
-            "Это бесплатно и займёт 5 секунд.",
-            reply_markup=get_subscription_kb()
-        )
-        return
-
-    await message.answer(
-        "Выберите категорию ТС:",
-        reply_markup=get_category_kb()
-    )
-    await state.set_state(UtilForm.category)
 
 
 @router.message(F.text == "📞 Связаться со мной")
