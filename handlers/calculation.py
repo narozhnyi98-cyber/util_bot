@@ -103,7 +103,7 @@ async def process_age(message: Message, state: FSMContext):
             "⚡ <b>Электромобиль</b>\n\n"
             "Введите мощность двигателя в <b>кВт</b> "
             "(только число, например: 150):\n\n"
-            "ℹ️ Льготный тариф действует для электромобилей до 80 л.с. (~58.8 кВт).",
+            "ℹ️ Льготный тариф действует до 80 л.с. (~58.8 кВт).",
             parse_mode="HTML"
         )
         await state.set_state(UtilForm.engine_power)
@@ -139,7 +139,6 @@ async def process_engine_power(message: Message, state: FSMContext, bot: Bot):
     data = await state.get_data()
     engine_type = data.get("engine_type", "ICE")
 
-    # Для электро — вводится в кВт, конвертируем в л.с.
     if engine_type == "EV":
         try:
             power_kw = float(message.text.strip().replace(" ", "").replace(",", "."))
@@ -173,7 +172,6 @@ async def process_engine_power(message: Message, state: FSMContext, bot: Bot):
         await state.clear()
         return
 
-    # Сохраняем в историю
     engine_label = {
         "ICE": "⛽ ДВС",
         "EV": "⚡ Электро",
@@ -191,7 +189,6 @@ async def process_engine_power(message: Message, state: FSMContext, bot: Bot):
         details=result,
     )
 
-    # Формируем ответ
     power_line = f"Мощность: {result['engine_power']} л.с."
     if engine_type == "EV":
         power_kw = data.get("power_kw", 0)
@@ -201,7 +198,6 @@ async def process_engine_power(message: Message, state: FSMContext, bot: Bot):
     if engine_type != "EV":
         volume_line = f"Объём двигателя: {result['engine_volume']} см³\n"
 
-    # Информация о льготном пороге
     if engine_type == "EV":
         if result["engine_power"] <= 80:
             status_hint = "✅ Льготный тариф (до 80 л.с.)"
@@ -257,16 +253,3 @@ async def process_engine_power(message: Message, state: FSMContext, bot: Bot):
         reply_markup=get_main_menu_kb()
     )
     await state.clear()
-
-
-# ── Команды /cancel и /contact ──
-@router.message(F.text == "📞 Связаться со мной")
-async def contact_button(message: Message):
-    await message.answer(
-        "📞 <b>Связаться со мной</b>\n\n"
-        "Telegram: @nrzhnyi\n"
-        "Телефон: +7 926 104-45-24\n"
-        "WhatsApp: +7 926 104-45-24\n\n"
-        "Пишите — отвечу в течение часа.",
-        parse_mode="HTML"
-    )
