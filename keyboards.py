@@ -6,6 +6,8 @@ def get_main_menu_kb() -> ReplyKeyboardMarkup:
         keyboard=[
             [KeyboardButton(text="🚗 Рассчитать утильсбор")],
             [KeyboardButton(text="🚗 Подобрать авто под бюджет")],
+            [KeyboardButton(text="💰 Стоит ли везти?")],
+            [KeyboardButton(text="📩 Оформить под ключ")],
             [KeyboardButton(text="📞 Связаться со мной")]
         ],
         resize_keyboard=True
@@ -68,6 +70,27 @@ def get_country_kb() -> ReplyKeyboardMarkup:
             [KeyboardButton(text="Китай"), KeyboardButton(text="Европа")],
             [KeyboardButton(text="Любая")],
             [KeyboardButton(text="⬅️ В меню")]
+        ],
+        resize_keyboard=True,
+        one_time_keyboard=True
+    )
+
+
+def get_lead_cancel_kb() -> ReplyKeyboardMarkup:
+    return ReplyKeyboardMarkup(
+        keyboard=[
+            [KeyboardButton(text="❌ Отменить")]
+        ],
+        resize_keyboard=True,
+        one_time_keyboard=True
+    )
+
+
+def get_lead_skip_kb() -> ReplyKeyboardMarkup:
+    return ReplyKeyboardMarkup(
+        keyboard=[
+            [KeyboardButton(text="➡️ Пропустить")],
+            [KeyboardButton(text="❌ Отменить")]
         ],
         resize_keyboard=True,
         one_time_keyboard=True
