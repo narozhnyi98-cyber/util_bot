@@ -10,6 +10,7 @@ from keyboards import (
     get_category_kb, get_engine_type_kb,
 )
 from services.calculator import calculate_util
+from services.car_selector import calculate_excise, NDS_RATE
 from services.storage import save_calculation
 
 logger = logging.getLogger(__name__)
@@ -54,10 +55,7 @@ async def process_engine_type(message: Message, state: FSMContext):
         return
 
     await state.update_data(engine_type=engine_type)
-    await message.answer(
-        "Укажите категорию ТС:",
-        reply_markup=get_category_kb()
-    )
+    await message.answer("Укажите категорию ТС:", reply_markup=get_category_kb())
     await state.set_state(UtilForm.category)
 
 
@@ -110,9 +108,7 @@ async def process_age(message: Message, state: FSMContext):
         return
 
     # Для ДВС и гибридов — сначала объём
-    await message.answer(
-        "Введите объём двигателя в см³ (только число, например: 1998):"
-    )
+    await message.answer("Введите объём двигателя в см³ (только число, например: 1998):")
     await state.set_state(UtilForm.engine_volume)
 
 
@@ -127,15 +123,13 @@ async def process_engine_volume(message: Message, state: FSMContext):
         await message.answer("Введите корректное число (объём в см³, например: 1998).")
         return
     await state.update_data(engine_volume=volume)
-    await message.answer(
-        "Введите мощность двигателя в л.с. (только число, например: 150):"
-    )
+    await message.answer("Введите мощность двигателя в л.с. (только число, например: 150):")
     await state.set_state(UtilForm.engine_power)
 
 
 # ── ШАГ 6: мощность ──
 @router.message(UtilForm.engine_power)
-async def process_engine_power(message: Message, state: FSMContext, bot: Bot):
+async def process_engine_power(message: Message, state: FSMContext):
     data = await state.get_data()
     engine_type = data.get("engine_type", "ICE")
 
@@ -160,8 +154,41 @@ async def process_engine_power(message: Message, state: FSMContext, bot: Bot):
             return
         await state.update_data(engine_power=power_hp)
 
-    # Финальный расчёт
+    # ⚡ Для EV/HEV — ещё нужна стоимость авто (для акциза и НДС)
+    if engine_type in ("EV", "HEV"):
+        await message.answer(
+            "Укажите стоимость автомобиля за рубежом в рублях "
+            "(только число, например: 3500000).\n\n"
+            "Это нужно для расчёта акциза и НДС 22%.",
+            parse_mode="HTML"
+        )
+        await state.set_state(UtilForm.car_price)
+        return
+
+    # Для ДВС — сразу финальный расчёт
+    await finish_calculation(message, state)
+
+
+# ── ШАГ 7: стоимость авто (только для EV/HEV) ──
+@router.message(UtilForm.car_price)
+async def process_car_price(message: Message, state: FSMContext):
+    try:
+        price = int(message.text.strip().replace(" ", "").replace("₽", ""))
+        if price <= 0 or price > 100_000_000:
+            raise ValueError
+    except ValueError:
+        await message.answer("Введите корректную стоимость в рублях (например: 3500000).")
+        return
+    await state.update_data(car_price=price)
+
+    await finish_calculation(message, state)
+
+
+# ── ФИНАЛЬНЫЙ РАСЧЁТ ──
+async def finish_calculation(message: Message, state: FSMContext):
     data = await state.get_data()
+    engine_type = data.get("engine_type", "ICE")
+
     result = calculate_util(data)
 
     if result is None:
@@ -214,6 +241,48 @@ async def process_engine_power(message: Message, state: FSMContext, bot: Bot):
         else:
             status_hint = "⚠️ Коммерческий тариф (свыше 160 л.с.)"
 
+    # Базовое сообщение про утильсбор
+    text = (
+        f"📊 <b>Расчёт утилизационного сбора</b>\n\n"
+        f"Тип двигателя: {engine_label}\n"
+        f"Категория ТС: {result['category']}\n"
+        f"Статус: {result['importer']}\n"
+        f"Возраст: {result['age']}\n"
+        f"{volume_line}"
+        f"{power_line}\n\n"
+        f"{status_hint}\n\n"
+        f"Базовая ставка: {result['base']:,} ₽\n"
+        f"Коэффициент: {result['coefficient']}\n"
+        f"<b>Утильсбор: {result['total']:,.2f} ₽</b>\n"
+    )
+
+    # ⚡ Для EV/HEV — добавляем пошлину, акциз и НДС
+    if engine_type in ("EV", "HEV"):
+        car_price = data.get("car_price", 0)
+        if car_price > 0:
+            # Пошлина 15% от стоимости
+            duty = car_price * 0.15
+            # Акциз по мощности
+            excise = calculate_excise(result["engine_power"])
+            # НДС 22% от (стоимость + пошлина + акциз)
+            nds = (car_price + duty + excise) * NDS_RATE
+
+            total_payments = result["total"] + duty + excise + nds
+
+            text += (
+                f"\n<b>Дополнительные платежи:</b>\n"
+                f"   • Стоимость авто: {car_price:,} ₽\n"
+                f"   • Пошлина (15%): {duty:,.0f} ₽\n"
+                f"   • Акциз: {excise:,.0f} ₽\n"
+                f"   • НДС 22%: {nds:,.0f} ₽\n"
+                f"\n<b>ИТОГО обязательных платежей: {total_payments:,.0f} ₽</b>\n"
+            )
+
+    text += (
+        f"\n⚠️ Расчёт является предварительным и не заменяет "
+        f"официальный расчёт таможенного органа."
+    )
+
     contact_kb = InlineKeyboardMarkup(
         inline_keyboard=[
             [InlineKeyboardButton(
@@ -227,29 +296,23 @@ async def process_engine_power(message: Message, state: FSMContext, bot: Bot):
         ]
     )
 
-    await message.answer(
-        f"📊 <b>Результат расчёта утилизационного сбора</b>\n\n"
-        f"Тип двигателя: {engine_label}\n"
-        f"Категория ТС: {result['category']}\n"
-        f"Статус: {result['importer']}\n"
-        f"Возраст: {result['age']}\n"
-        f"{volume_line}"
-        f"{power_line}\n\n"
-        f"{status_hint}\n\n"
-        f"Базовая ставка: {result['base']:,} ₽\n"
-        f"Коэффициент: {result['coefficient']}\n"
-        f"<b>Итого: {result['total']:,.2f} ₽</b>\n\n"
-        f"⚠️ Расчёт является предварительным и не заменяет "
-        f"официальный расчёт таможенного органа.\n\n"
-        f"📞 <b>Нужна помощь с оформлением?</b>\n"
-        f"Telegram: @nrzhnyi\n"
-        f"WhatsApp: +7 926 104-45-24",
-        reply_markup=contact_kb,
-        parse_mode="HTML"
-    )
+    await message.answer(text, reply_markup=contact_kb, parse_mode="HTML")
 
     await message.answer(
         "Что делаем дальше?",
         reply_markup=get_main_menu_kb()
     )
     await state.clear()
+
+
+# ── Команда «Связаться со мной» ──
+@router.message(F.text == "📞 Связаться со мной")
+async def contact_button(message: Message):
+    await message.answer(
+        "📞 <b>Связаться со мной</b>\n\n"
+        "Telegram: @nrzhnyi\n"
+        "Телефон: +7 926 104-45-24\n"
+        "WhatsApp: +7 926 104-45-24\n\n"
+        "Пишите — отвечу в течение часа.",
+        parse_mode="HTML"
+    )
