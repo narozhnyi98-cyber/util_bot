@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 router = Router()
 
 # ⚠️ ЗАМЕНИ НА CHAT_ID ВТОРОГО АККАУНТА (@tamozhelp_leads)
-ADMIN_CHAT_ID = 123456789
+ADMIN_CHAT_ID = 8601515134
 
 
 @router.message(F.text == "❌ Отменить")
