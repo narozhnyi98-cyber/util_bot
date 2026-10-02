@@ -123,6 +123,3 @@ async def process_country(message: Message, state: FSMContext):
 
     await message.answer(text, parse_mode="HTML", reply_markup=get_main_menu_kb())
     await state.clear()
-
-    await message.answer(text, parse_mode="HTML", reply_markup=get_main_menu_kb())
-    await state.clear()
