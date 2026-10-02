@@ -15,6 +15,19 @@ def get_main_menu_kb() -> ReplyKeyboardMarkup:
     )
 
 
+def get_engine_type_kb() -> ReplyKeyboardMarkup:
+    return ReplyKeyboardMarkup(
+        keyboard=[
+            [KeyboardButton(text="⛽ ДВС (бензин/дизель)")],
+            [KeyboardButton(text="⚡ Электромобиль")],
+            [KeyboardButton(text="🔌 Гибрид")],
+            [KeyboardButton(text="⬅️ В меню")]
+        ],
+        resize_keyboard=True,
+        one_time_keyboard=True
+    )
+
+
 def get_category_kb() -> ReplyKeyboardMarkup:
     return ReplyKeyboardMarkup(
         keyboard=[
