@@ -1,6 +1,6 @@
 import logging
 
-from aiogram import Router, F
+from aiogram import Router, F, Bot
 from aiogram.types import CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 
 from services.car_selector import load_cars
@@ -34,9 +34,17 @@ def get_models_kb(mark: str) -> InlineKeyboardMarkup:
 
     buttons = []
     for car in models:
+        engine_type = car.get("engine_type", "ICE")
+        if engine_type == "EV":
+            icon = "⚡"
+        elif engine_type == "HEV":
+            icon = "🔌"
+        else:
+            icon = ""
+
         buttons.append([
             InlineKeyboardButton(
-                text=f"{car['model']} ({car['year_from']}+, {car['country']})",
+                text=f"{icon} {car['model']} ({car['year_from']}+, {car['country']})",
                 callback_data=f"ia_car:{car['id']}"
             )
         ])
@@ -46,7 +54,7 @@ def get_models_kb(mark: str) -> InlineKeyboardMarkup:
 
 
 @router.message(F.text == "💰 Стоит ли везти?")
-async def start_import_check(message):
+async def start_import_check(message, bot: Bot):
     await message.answer(
         "💰 <b>Стоит ли везти это авто?</b>\n\n"
         "Выберите марку автомобиля — я сравню стоимость ввоза «под ключ» "
@@ -108,9 +116,17 @@ async def choose_car(callback: CallbackQuery):
         verdict = "❌ <b>ВВОЗИТЬ НЕВЫГОДНО</b>"
         economy_line = f"💸 Выгоднее купить в РФ. Экономия: <b>{abs(result['difference']):,.0f} ₽</b>"
 
+    engine_type = car.get("engine_type", "ICE")
+    if engine_type == "EV":
+        engine_label = "⚡ Электро"
+    elif engine_type == "HEV":
+        engine_label = f"🔌 Гибрид, {car['engine_volume_cc']/1000:.1f} л"
+    else:
+        engine_label = f"{car['engine_volume_cc']/1000:.1f} л"
+
     text = (
         f"🚗 <b>{car['make']} {car['model']}</b> ({car['year_from']}+, {car['country']})\n"
-        f"{car['engine_volume_cc']/1000:.1f} л, {car['engine_power_hp']} л.с.\n\n"
+        f"{engine_label}, {car['engine_power_hp']} л.с.\n\n"
         f"<b>Стоимость ввоза «под ключ»:</b>\n"
         f"   • Авто за рубежом: {result['price_foreign']:,} ₽\n"
         f"   • Пошлина: {result['duty']:,.0f} ₽\n"
@@ -127,7 +143,6 @@ async def choose_car(callback: CallbackQuery):
         f"📞 Нужна помощь с оформлением? @nrzhnyi"
     )
 
-    # Сохраняем в историю
     summary = (
         f"{car['make']} {car['model']} — "
         f"{'✅ выгодно' if result['is_profitable'] else '❌ невыгодно'} "
