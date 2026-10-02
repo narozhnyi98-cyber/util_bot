@@ -1,76 +1,83 @@
 import logging
-from datetime import datetime
 
-from services.car_selector import (
-    get_rf_price,
-    calculate_util,
-    calculate_duty,
-    calculate_customs_fee,
-    calculate_total_expenses,
-    calculate_excise,
-    NDS_RATE,
-)
-from services.currency import get_eur_rate
+from aiogram import Router, F, Bot
+from aiogram.filters import Command
+from aiogram.fsm.context import FSMContext
+from aiogram.types import Message
+
+from states import UtilForm
+from keyboards import get_main_menu_kb
+from handlers.subscription import check_subscription, get_subscription_kb
 
 logger = logging.getLogger(__name__)
+router = Router()
 
 
-async def compare_import(car: dict) -> dict | None:
-    """Считает ввоз «под ключ» и сравнивает с ценой в РФ."""
-    current_year = datetime.now().year
-    age_years = current_year - car["year_from"]
+@router.message(Command("start"))
+async def cmd_start(message: Message, state: FSMContext, bot: Bot):
+    await state.clear()
+    user_id = message.from_user.id
 
-    eur_rub = await get_eur_rate()
+    try:
+        if await check_subscription(bot, user_id):
+            await message.answer(
+                "🚗 <b>Расчёт утилизационного сбора</b>\n\n"
+                "Я помогу рассчитать предварительную сумму утильсбора "
+                "для вашего транспортного средства.\n\n"
+                "По вопросам оформления СБКТС, ЭПТС, ГЛОНАСС — @nrzhnyi\n\n"
+                "Выберите действие:",
+                reply_markup=get_main_menu_kb(),
+                parse_mode="HTML"
+            )
+        else:
+            await message.answer(
+                "👋 Для доступа к боту подпишитесь на наш канал.\n\n"
+                "Это бесплатно и займёт 5 секунд.",
+                reply_markup=get_subscription_kb()
+            )
+    except Exception as e:
+        logger.error(f"Не удалось отправить сообщение пользователю {user_id}: {e}")
 
-    engine_type = car.get("engine_type", "ICE")
-    volume_cc = car.get("engine_volume_cc", 0)
 
-    util = calculate_util(car["engine_power_hp"], age_years, engine_type)
-    duty = calculate_duty(
-        car["price_foreign_rub"],
-        volume_cc,
-        age_years,
-        eur_rub,
-    )
-    customs_fee = calculate_customs_fee(car["price_foreign_rub"])
-    expenses = calculate_total_expenses(car["country"])
+@router.message(Command("contact"))
+async def cmd_contact(message: Message):
+    try:
+        await message.answer(
+            "📞 <b>Связаться со мной</b>\n\n"
+            "Telegram: @nrzhnyi\n"
+            "Телефон: +7 926 104-45-24\n"
+            "WhatsApp: +7 926 104-45-24\n\n"
+            "Пишите в любое время — отвечу в течение часа.\n"
+            "Помогу с оформлением СБКТС, ЭПТС, ГЛОНАСС и растаможкой.",
+            parse_mode="HTML"
+        )
+    except Exception as e:
+        logger.error(f"Ошибка при отправке контакта: {e}")
 
-    excise = 0
-    nds = 0
-    if engine_type in ("EV", "HEV"):
-        excise = calculate_excise(car["engine_power_hp"])
-        nds = (car["price_foreign_rub"] + duty + excise) * NDS_RATE
 
-    total_import = (
-        car["price_foreign_rub"]
-        + duty
-        + util
-        + customs_fee
-        + expenses
-        + excise
-        + nds
-    )
+@router.message(Command("cancel"))
+async def cmd_cancel(message: Message, state: FSMContext):
+    await state.clear()
+    try:
+        await message.answer(
+            "Диалог сброшен.",
+            reply_markup=get_main_menu_kb()
+        )
+    except Exception as e:
+        logger.error(f"Ошибка при сбросе диалога: {e}")
 
-    rf_price = get_rf_price(car["make"], car["model"])
-    if rf_price is None:
-        return None
 
-    difference = rf_price - total_import
-
-    return {
-        "car": car,
-        "age_years": age_years,
-        "eur_rub": eur_rub,
-        "price_foreign": car["price_foreign_rub"],
-        "duty": duty,
-        "util": util,
-        "customs_fee": customs_fee,
-        "expenses": expenses,
-        "excise": excise,
-        "nds": nds,
-        "total_import": total_import,
-        "rf_price": rf_price,
-        "difference": difference,
-        "is_profitable": difference > 0,
-        "engine_type": engine_type,
-    }
+@router.message(F.text == "📞 Связаться со мной")
+async def contact_button(message: Message):
+    try:
+        await message.answer(
+            "📞 <b>Связаться со мной</b>\n\n"
+            "Telegram: @nrzhnyi\n"
+            "Телефон: +7 926 104-45-24\n"
+            "WhatsApp: +7 926 104-45-24\n\n"
+            "Пишите — отвечу в течение часа.\n"
+            "Помогу с оформлением СБКТС, ЭПТС, ГЛОНАСС и растаможкой.",
+            parse_mode="HTML"
+        )
+    except Exception as e:
+        logger.error(f"Ошибка при отправке контакта: {e}")
