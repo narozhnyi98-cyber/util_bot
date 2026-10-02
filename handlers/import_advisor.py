@@ -5,13 +5,13 @@ from aiogram.types import CallbackQuery, InlineKeyboardMarkup, InlineKeyboardBut
 
 from services.car_selector import load_cars
 from services.import_advisor import compare_import
+from services.storage import save_calculation
 
 logger = logging.getLogger(__name__)
 router = Router()
 
 
 def get_marks_kb() -> InlineKeyboardMarkup:
-    """Клавиатура со списком марок."""
     cars = load_cars()
     marks = sorted(set(c["make"] for c in cars))
 
@@ -29,7 +29,6 @@ def get_marks_kb() -> InlineKeyboardMarkup:
 
 
 def get_models_kb(mark: str) -> InlineKeyboardMarkup:
-    """Клавиатура с моделями выбранной марки."""
     cars = load_cars()
     models = [c for c in cars if c["make"] == mark]
 
@@ -126,6 +125,27 @@ async def choose_car(callback: CallbackQuery):
         f"⚠️ <i>Курс EUR ЦБ РФ: {result['eur_rub']:.2f} ₽. "
         f"Цена в РФ — средняя по рынку.</i>\n\n"
         f"📞 Нужна помощь с оформлением? @nrzhnyi"
+    )
+
+    # Сохраняем в историю
+    summary = (
+        f"{car['make']} {car['model']} — "
+        f"{'✅ выгодно' if result['is_profitable'] else '❌ невыгодно'} "
+        f"(разница {abs(result['difference']):,.0f} ₽)"
+    )
+    save_calculation(
+        user_id=callback.from_user.id,
+        calc_type="import_check",
+        summary=summary,
+        details={
+            "make": car["make"],
+            "model": car["model"],
+            "country": car["country"],
+            "total_import": result["total_import"],
+            "rf_price": result["rf_price"],
+            "difference": result["difference"],
+            "is_profitable": result["is_profitable"],
+        }
     )
 
     buttons = [
