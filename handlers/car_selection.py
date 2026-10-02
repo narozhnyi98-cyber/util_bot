@@ -7,6 +7,7 @@ from aiogram.types import Message
 from states import CarSelectionForm
 from keyboards import get_main_menu_kb, get_body_type_kb, get_country_kb
 from services.car_selector import select_cars
+from services.storage import save_calculation
 
 logger = logging.getLogger(__name__)
 router = Router()
@@ -90,6 +91,20 @@ async def process_country(message: Message, state: FSMContext):
         )
         await state.clear()
         return
+
+    # Сохраняем запрос в историю
+    summary = f"Бюджет {budget:,} ₽, {body_type}, {country} — {len(results)} вариантов"
+    save_calculation(
+        user_id=message.from_user.id,
+        calc_type="selection",
+        summary=summary,
+        details={
+            "budget": budget,
+            "body_type": body_type,
+            "country": country,
+            "found": len(results),
+        }
+    )
 
     text = (
         f"🚗 <b>Подбор под бюджет: {budget:,} ₽</b>\n"
