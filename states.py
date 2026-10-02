@@ -13,3 +13,9 @@ class CarSelectionForm(StatesGroup):
     budget = State()
     body_type = State()
     country = State()
+
+
+class LeadForm(StatesGroup):
+    name = State()
+    phone = State()
+    comment = State()
