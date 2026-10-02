@@ -5,6 +5,7 @@ from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 from states import UtilForm
 from keyboards import get_importer_kb, get_age_kb, get_main_menu_kb, get_category_kb
 from services.calculator import calculate_util
+from services.storage import save_calculation
 
 router = Router()
 
@@ -109,6 +110,18 @@ async def process_engine_power(message: Message, state: FSMContext):
         )
         await state.clear()
         return
+
+    # Сохраняем расчёт в историю
+    summary = (
+        f"{result['category']}, {result['importer']}, {result['age']}, "
+        f"{result['engine_power']} л.с. — {result['total']:,.0f} ₽"
+    )
+    save_calculation(
+        user_id=message.from_user.id,
+        calc_type="util",
+        summary=summary,
+        details=result,
+    )
 
     contact_kb = InlineKeyboardMarkup(
         inline_keyboard=[
